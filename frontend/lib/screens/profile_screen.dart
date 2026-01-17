@@ -162,105 +162,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final email = user.email ?? "";
         final firstLetter =
             username.isNotEmpty ? username[0].toUpperCase() : "?";
-        return Column(
-          children: [
-            Container(
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * .3,
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * .3,
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
                 ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      firstLetter,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF007AFF),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        firstLetter,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF007AFF),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    username,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    const SizedBox(height: 12),
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
+                    const SizedBox(height: 4),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            /// 📋 Menu
-            !widget.isStaff
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        _ProfileTile(
-                          icon: Icons.book,
-                          title: "My Borrowed Books",
-                          onTap: () {
-                            Get.to(() => MyBorrowedBooksScreen());
-                          },
-                        ),
-                        _ProfileTile(
-                          icon: Icons.history,
-                          title: "Borrow History",
-                          onTap: () {
-                            Get.to(() => BorrowHistoryScreen());
-                          },
-                        ),
-                        // notification
-                        _ProfileTile(
-                          icon: Icons.notifications,
-                          title: "Notifications",
-                          onTap: () {
-                            Get.to(() => NotificationsScreen());
-                          },
-                        ),
-                        _ProfileTile(
-                          icon: Icons.logout,
-                          title: "Logout",
-                          textColor: Colors.red,
-                          iconColor: Colors.red,
-                          onTap: () async {
-                            await authController.logout();
-                          },
-                        ),
-                      ],
+              /// 📋 Menu
+              !widget.isStaff
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          _ProfileTile(
+                            icon: Icons.book,
+                            title: "My Borrowed Books",
+                            onTap: () {
+                              Get.to(() => MyBorrowedBooksScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.history,
+                            title: "Borrow History",
+                            onTap: () {
+                              Get.to(() => BorrowHistoryScreen());
+                            },
+                          ),
+                          // notification
+                          _ProfileTile(
+                            icon: Icons.notifications,
+                            title: "Notifications",
+                            onTap: () {
+                              Get.to(() => NotificationsScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.logout,
+                            title: "Logout",
+                            textColor: Colors.red,
+                            iconColor: Colors.red,
+                            onTap: () async {
+                              await authController.logout();
+                            },
+                          ),
+                        ],
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          _ProfileTile(
+                            icon: Icons.book,
+                            title: "Manage Books",
+                            onTap: () {
+                              // Get.to(() => AdminBookListScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.category,
+                            title: "Manage Categories",
+                            onTap: () {
+                              Get.to(() => CategoriesScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.people,
+                            title: "Manage Users",
+                            onTap: () {
+                              Get.to(() => UserListScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.assignment,
+                            title: "Borrow Requests",
+                            onTap: () {
+                              Get.to(() => AdminBorrowedBookScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.bar_chart,
+                            title: "Reports",
+                            onTap: () {
+                              Get.to(() => ReportScreen());
+                            },
+                          ),
+                          _ProfileTile(
+                            icon: Icons.logout,
+                            title: "Logout",
+                            textColor: Colors.red,
+                            iconColor: Colors.red,
+                            onTap: () async {
+                              await authController.logout();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  )
-                : Center(
-                    child: Text(
-                      'Admin Account',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-          ],
+            ],
+          ),
         );
       }),
     );
