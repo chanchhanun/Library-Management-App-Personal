@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:library_management_app/services/apis/book_api.dart';
 
+import '../models/author.dart';
 import '../models/book.dart';
 import '../models/category.dart';
 
@@ -90,13 +91,59 @@ class BookController extends GetxController {
   }
 
   // create book
-  Future<void> addBook({required Book book}) async {
-    await _bookApi.addBook(book: book);
+  Future<void> addBook({
+    required String title,
+    required String isbn,
+    required String category,
+    required String author,
+    required String status,
+    required String publishedDate,
+    required int totalCopies,
+    required int availableCopies,
+    required String description,
+    required File image,
+  }) async {
+    await _bookApi.addBook(
+      title: title,
+      isbn: isbn,
+      category: category,
+      author: author,
+      status: status,
+      publishedDate: publishedDate,
+      totalCopies: totalCopies,
+      availableCopies: availableCopies,
+      description: description,
+      image: image,
+    );
   }
 
   // update book
-  Future<void> updateBook({required Book book}) async {
-    await _bookApi.updateBook(book: book);
+  Future<void> updateBook({
+    required String id,
+    required String title,
+    required String isbn,
+    required String category,
+    required String author,
+    required String status,
+    required String publishedDate,
+    required int totalCopies,
+    required int availableCopies,
+    required String description,
+    File? image,
+  }) async {
+    await _bookApi.updateBook(
+      id: id,
+      title: title,
+      isbn: isbn,
+      category: category,
+      author: author,
+      status: status,
+      publishedDate: publishedDate,
+      totalCopies: totalCopies,
+      availableCopies: availableCopies,
+      description: description,
+      image: image,
+    );
   }
 
   // delete book

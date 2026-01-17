@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:library_management_app/constants/color_const.dart';
@@ -5,14 +7,19 @@ import 'package:library_management_app/controllers/author_controller.dart';
 import 'package:library_management_app/controllers/category_controller.dart';
 import '../../controllers/book_controller.dart';
 import '../../models/book.dart';
+import 'package:image_picker/image_picker.dart';
 
-class ManageBooksScreen extends StatelessWidget {
+class ManageBooksScreen extends StatefulWidget {
   ManageBooksScreen({super.key});
 
+  @override
+  State<ManageBooksScreen> createState() => _ManageBooksScreenState();
+}
+
+class _ManageBooksScreenState extends State<ManageBooksScreen> {
   final BookController bookController = Get.put(BookController());
   final categoryController = Get.put(CategoryController());
   final authorController = Get.put(AuthorController());
-
   int? _selectedAuthorId;
   int? _selectedCategoryId;
   String _status = 'rent';
@@ -24,7 +31,14 @@ class ManageBooksScreen extends StatelessWidget {
   final _availableCopiesController = TextEditingController();
   final _descController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    bookController.getBooks();
+  }
+
   void _openBookSheet({Book? book}) {
+    // !=null for add book
     if (book != null) {
       _titleController.text = book.title ?? '';
       _isbnController.text = book.isbn ?? '';
@@ -33,10 +47,11 @@ class ManageBooksScreen extends StatelessWidget {
       _availableCopiesController.text = book.availableCopies.toString();
       _descController.text = book.description ?? '';
 
-      _selectedAuthorId = book.author?.id;
+      _selectedAuthorId = book.authorDetail?.id;
       _selectedCategoryId = book.category;
       _status = book.status ?? 'rent';
     } else {
+      // == null for edit book
       _titleController.clear();
       _isbnController.clear();
       _publishedDateController.clear();
@@ -48,7 +63,7 @@ class ManageBooksScreen extends StatelessWidget {
       _selectedCategoryId = null;
       _status = 'rent';
 
-      bookController.imageFile.value = null; // ✅ IMPORTANT
+      // bookController.imageFile.value = null; // ✅ IMPORTANT
     }
 
     Get.bottomSheet(
@@ -96,30 +111,60 @@ class ManageBooksScreen extends StatelessWidget {
               ),
 
               /// Category Dropdown
-              Obx(() => DropdownButtonFormField<int>(
-                    value: _selectedCategoryId,
-                    decoration: const InputDecoration(labelText: 'Category'),
-                    items: categoryController.categories.map((c) {
-                      return DropdownMenuItem(
-                        value: c.id,
-                        child: Text(c.name ?? ''),
-                      );
-                    }).toList(),
-                    onChanged: (val) => _selectedCategoryId = val,
-                  )),
+              Obx(() {
+                final ids =
+                    categoryController.categories.map((e) => e.id).toList();
+
+                return DropdownButtonFormField<int>(
+                  value: ids.contains(_selectedCategoryId)
+                      ? _selectedCategoryId
+                      : null,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: categoryController.categories
+                      .map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name ?? ''),
+                          ))
+                      .toList(),
+                  onChanged: (val) => setState(() => _selectedCategoryId = val),
+                );
+              }),
 
               /// Author Dropdown
-              Obx(() => DropdownButtonFormField<int>(
-                    value: _selectedAuthorId,
-                    decoration: const InputDecoration(labelText: 'Author'),
-                    items: authorController.authors.map((a) {
-                      return DropdownMenuItem(
-                        value: a.id,
-                        child: Text(a.name ?? ''),
-                      );
-                    }).toList(),
-                    onChanged: (val) => _selectedAuthorId = val,
-                  )),
+              Obx(() {
+                final ids = authorController.authors.map((e) => e.id).toList();
+
+                return DropdownButtonFormField<int>(
+                  value: ids.contains(_selectedAuthorId)
+                      ? _selectedAuthorId
+                      : null,
+                  decoration: const InputDecoration(labelText: 'Author'),
+                  items: authorController.authors.map((a) {
+                    return DropdownMenuItem(
+                      value: a.id,
+                      child: Text(a.name ?? ''),
+                    );
+                  }).toList(),
+                  onChanged: (val) => _selectedAuthorId = val,
+                );
+              }),
+              // Obx(() {
+              //   final ids = authorController.authors.map((e) => e.id).toList();
+              //
+              //   return DropdownButtonFormField<int>(
+              //     value: ids.contains(_selectedAuthorId)
+              //         ? _selectedAuthorId
+              //         : null,
+              //     decoration: const InputDecoration(labelText: 'Author'),
+              //     items: authorController.authors
+              //         .map((a) => DropdownMenuItem(
+              //               value: a.id,
+              //               child: Text(a.name ?? ''),
+              //             ))
+              //         .toList(),
+              //     onChanged: (val) => setState(() => _selectedAuthorId = val),
+              //   );
+              // }),
 
               /// Status
               DropdownButtonFormField<String>(
@@ -172,18 +217,24 @@ class ManageBooksScreen extends StatelessWidget {
                 icon: Icons.description,
                 maxLines: 2,
               ),
-              // pick image from gallery
+              // how to make this image correct logic ?
+              // bookController.imageFile.value != null
+              //     ? Image.file(bookController.imageFile.value!,
+              //         width: double.infinity, height: 300)
+              //     : Center(child: Text('No image.')),
+              _buildImagePreview(book),
+
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 width: double.infinity,
-                child: IconButton(
+                child: TextButton(
                     onPressed: () async {
                       await bookController.pickImage();
                     },
-                    icon: Icon(Icons.image)),
+                    child: const Text('Pick Image')),
               ),
 
               const SizedBox(height: 24),
@@ -199,26 +250,50 @@ class ManageBooksScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    final newBook = Book(
-                      id: book?.id,
-                      title: _titleController.text,
-                      isbn: _isbnController.text,
-                      category: _selectedCategoryId!,
-                      author: Author(id: _selectedAuthorId),
-                      status: _status,
-                      publishedDate: _publishedDateController.text,
-                      totalCopies: int.parse(_totalCopiesController.text),
-                      availableCopies:
-                          int.parse(_availableCopiesController.text),
-                      description: _descController.text,
-                      image: bookController.imageFile.value?.path,
-                    );
-
                     book == null
-                        ? await bookController.addBook(book: newBook)
-                        : await bookController.updateBook(book: newBook);
+                        ? await bookController.addBook(
+                            title: _titleController.text,
+                            isbn: _isbnController.text,
+                            category: _selectedCategoryId.toString(),
+                            author: _selectedAuthorId.toString(),
+                            status: _status,
+                            publishedDate: _publishedDateController.text,
+                            totalCopies: int.parse(_totalCopiesController.text),
+                            availableCopies:
+                                int.parse(_availableCopiesController.text),
+                            description: _descController.text,
+                            image: bookController.imageFile.value!,
+                          )
+                        : await bookController.updateBook(
+                            id: book.id.toString(),
+                            title: _titleController.text,
+                            isbn: _isbnController.text,
+                            category: _selectedCategoryId.toString(),
+                            author: _selectedAuthorId.toString(),
+                            status: _status,
+                            publishedDate: _publishedDateController.text,
+                            totalCopies: int.parse(_totalCopiesController.text),
+                            availableCopies:
+                                int.parse(_availableCopiesController.text),
+                            description: _descController.text,
+                            image: bookController
+                                .imageFile.value!, // ❌ crash if null
+                          );
+                    print('title : ${_titleController.text}');
+                    print('isbn : ${_isbnController.text}');
+                    print('category : ${_selectedCategoryId}');
+                    print('author : ${_selectedAuthorId}');
+                    print('status : ${_status}');
+                    print('publishedDate : ${_publishedDateController.text}');
+                    print('totalCopies : ${_totalCopiesController.text}');
+                    print(
+                        'availableCopies : ${_availableCopiesController.text}');
+                    print('description : ${_descController.text}');
+                    print('image : ${bookController.imageFile.value}');
+                    print(
+                        'image path : ${bookController.imageFile.value?.path}');
 
-                    Get.back();
+                    Navigator.pop(context);
                   },
                   child: const Text(
                     'Save Book',
@@ -246,6 +321,10 @@ class ManageBooksScreen extends StatelessWidget {
       body: Obx(() {
         if (bookController.books.isEmpty) {
           return const Center(child: Text('No books available'));
+        }
+
+        if (bookController.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
         }
 
         return ListView.builder(
@@ -330,12 +409,18 @@ class ManageBooksScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         tooltip: 'Edit Book',
-                        onPressed: () {},
+                        onPressed: () {
+                          _openBookSheet(book: book);
+                          print('author : ${bookController.authors}');
+                          print('category : ${bookController.categories}');
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         tooltip: 'Delete Book',
-                        onPressed: () {},
+                        onPressed: () {
+                          deleteConsideration(book.id.toString());
+                        },
                       ),
                     ],
                   ),
@@ -352,6 +437,22 @@ class ManageBooksScreen extends StatelessWidget {
         label: const Text('Add Book'),
         onPressed: () => _openBookSheet(),
       ),
+    );
+  }
+
+  void deleteConsideration(String id) {
+    Get.defaultDialog(
+      title: 'Delete Confirmation',
+      middleText: 'Are you sure you want to delete this book?',
+      textConfirm: 'Yes',
+      textCancel: 'No',
+      confirmTextColor: Colors.white,
+      cancelTextColor: Colors.grey,
+      onConfirm: () async {
+        await bookController.deleteBook(id: id);
+        Navigator.pop(context);
+      },
+      onCancel: () => Get.back(),
     );
   }
 
@@ -380,5 +481,23 @@ class ManageBooksScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildImagePreview(Book? book) {
+    return bookController.imageFile.value != null
+        ? Image.file(
+            bookController.imageFile.value!,
+            width: double.infinity,
+            height: 300,
+            fit: BoxFit.cover,
+          )
+        : (book?.image?.isNotEmpty ?? false)
+            ? Image.network(
+                book!.image!,
+                width: double.infinity,
+                height: 300,
+                fit: BoxFit.cover,
+              )
+            : const Center(child: Text('No image selected'));
   }
 }
